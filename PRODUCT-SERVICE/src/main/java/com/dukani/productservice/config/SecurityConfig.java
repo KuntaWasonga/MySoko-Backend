@@ -20,7 +20,6 @@ public class SecurityConfig {
 
     private final GatewayHeaderValidationFilter gatewayHeaderValidationFilter;
 
-    // Bean for SecurityFilterChain that replaces the WebSecurityConfigurerAdapter
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
@@ -30,9 +29,13 @@ public class SecurityConfig {
                                 .requestMatchers(
                                         // SWAGGER
                                         new AntPathRequestMatcher("/swagger-ui/**"),
-                                        new AntPathRequestMatcher("/v3/api-docs/**")
+                                        new AntPathRequestMatcher("/v3/api-docs/**"),
+
+
+                                        new AntPathRequestMatcher("/api/v1/products", "POST"),
+                                        new AntPathRequestMatcher("/api/v1/products/{id}", "GET")
                                 ).permitAll()
-                                .requestMatchers("/admin/**").hasAuthority("ADMIN") // Match authority directly
+                                .requestMatchers("/admin/**").hasAuthority("ADMIN")
                                 .requestMatchers("/user/**").hasAuthority("USER")
                                 .requestMatchers("/**").hasRole("USER")
                                 .anyRequest().authenticated()
