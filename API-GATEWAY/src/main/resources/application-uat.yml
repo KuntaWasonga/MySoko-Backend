@@ -1,0 +1,35 @@
+frontend:
+  url: ${FRONTEND_URL}
+
+spring:
+  config:
+    activate:
+      on-profile: uat
+  cloud:
+    gateway:
+      routes:
+        - id: user-service
+          uri: http://user-access-svc:8022/ # user service name on k8s cluster
+          predicates:
+            - Path=/ua/**
+          filters:
+            - StripPrefix=1
+            - AddRequestHeader=X-Gateway-Key, ${USER_ACCESS_TOKEN}
+
+        - id: products-service
+          uri: http://product-svc:8024/ # product service name on k8s cluster
+          predicates:
+            - Path=/conf/**
+          filters:
+            - StripPrefix=1
+            - AddRequestHeader=X-Gateway-Key, ${PRODUCTS_TOKEN}
+
+jwt:
+  secret: ${JWT_SECRET}
+
+logging:
+  level:
+    org.springframework.cloud.gateway: FALSE
+    org.springframework.web: FALSE
+    reactor.netty.http.client: FALSE
+    reactor.netty.http.server: FALSE

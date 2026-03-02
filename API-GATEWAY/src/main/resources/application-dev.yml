@@ -1,0 +1,38 @@
+gateway:
+  target-host: http://localhost
+
+frontend:
+  url: ${gateway.target-host}:3000 #assume frontend running on this port
+
+spring:
+  config:
+    activate:
+      on-profile: dev
+  cloud:
+    gateway:
+      routes:
+        - id: user-service
+          uri: ${gateway.target-host}:8022/
+          predicates:
+            - Path=/ua/**
+          filters:
+            - StripPrefix=1
+            - AddRequestHeader=X-Gateway-Key, my-secure-gateway-token
+
+        - id: products-service
+          uri: ${gateway.target-host}:8023/
+          predicates:
+            - Path=/conf/**
+          filters:
+            - StripPrefix=1
+            - AddRequestHeader=X-Gateway-Key, my-secure-gateway-products
+
+jwt:
+  secret: oirbkrier0ubhjnfooerrb,eroi;erheroherrb eroh;erjrpijreerbmeruer;verjl erou;er ererlg eriverlh
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.web: FALSE
+    reactor.netty.http.client: FALSE
+    reactor.netty.http.server: FALSE

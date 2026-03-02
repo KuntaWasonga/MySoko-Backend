@@ -3,6 +3,8 @@ spring:
     name: API-GATEWAY
   main:
     web-application-type: reactive
+  profiles:
+    active: dev
 
 server:
   port: 8021
