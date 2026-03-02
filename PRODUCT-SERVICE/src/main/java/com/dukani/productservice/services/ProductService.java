@@ -1,13 +1,13 @@
 package com.dukani.productservice.services;
 
 import com.dukani.productservice.dtos.ProductDTO;
-import com.dukani.productservice.entities.Products;
+import com.dukani.productservice.dtos.ProductResponse;
 
 import java.util.List;
 
 public interface ProductService {
-    Products createProduct(ProductDTO request);
-    Products getProduct(Long productId);
+    ProductResponse createProduct(ProductDTO request);
+    ProductResponse getProduct(Long productId);
 
-    List<Products> getProductsByCategory(Long id);
+    List<ProductResponse> getProductsByCategory(Long id);
 }

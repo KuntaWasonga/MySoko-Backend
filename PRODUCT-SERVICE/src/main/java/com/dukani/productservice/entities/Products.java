@@ -8,7 +8,13 @@ import java.time.LocalDateTime;
 
 @Entity
 @Builder
-@Table(name = "DUKANI_PRODUCTS")
+@Table(
+    name = "DUKANI_PRODUCTS",
+    uniqueConstraints = {
+            @UniqueConstraint(name = "uk_product_name", columnNames = "PRODUCT_NAME"),
+            @UniqueConstraint(name = "uk_product_code", columnNames = "PRODUCT_CODE")
+    }
+)
 @Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor

@@ -1,6 +1,7 @@
 package com.dukani.productservice.services.impl;
 
 import com.dukani.productservice.dtos.ProductDTO;
+import com.dukani.productservice.dtos.ProductResponse;
 import com.dukani.productservice.entities.ProductCategories;
 import com.dukani.productservice.entities.Products;
 import com.dukani.productservice.exceptions.ItemNotFoundException;
@@ -12,65 +13,61 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Log4j2
-@Transactional
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
     private final ProductCategoryRepository categoryRepository;
+    private final Clock clock;
 
     @Override
-    public Products createProduct(ProductDTO request) {
-        validateUniqueName(request.getName());
-        validateUniqueProductCode(request.getName());
+    @Transactional
+    public ProductResponse createProduct(ProductDTO request) {
         ProductCategories category = validateCategoryExists(request.getCategory());
+
+        log.debug("Creating product with code={}, name={}", request.getCode(), request.getName());
 
         Products newProduct = Products.builder()
                 .productName(request.getName())
-                .productCode(request.getCode().toUpperCase())
+                .productCode(request.getCode() != null ? request.getCode().toUpperCase() : null)
                 .productDescription(request.getDescription())
                 .category(category)
                 .productPrice(request.getPrice())
-                .productPrice(request.getPrice())
+                .productCurrency(request.getCurrency())
                 .active(Boolean.TRUE)
                 .createdBy(request.getCreatedBy())
-                .dateCreated(LocalDateTime.now())
+                .dateCreated(LocalDateTime.now(clock))
                 .build();
 
-        return productRepository.save(newProduct);
+        Products saved = productRepository.save(newProduct);
+        log.info("Product created successfully. id={}, code={}", saved.getProductId(), saved.getProductCode());
+
+        return new ProductResponse(saved);
     }
 
     @Override
-    public Products getProduct(Long productId) {
-        return validateProductExists(productId);
+    @Transactional(readOnly = true)
+    public ProductResponse getProduct(Long productId) {
+        Products product = validateProductExists(productId);
+        return new ProductResponse(product);
     }
 
     @Override
-    public List<Products> getProductsByCategory(Long id) {
+    @Transactional(readOnly = true)
+    public List<ProductResponse> getProductsByCategory(Long id) {
         validateCategoryExists(id);
 
-        return productRepository.findByCategory(id);
-    }
-
-    private void validateUniqueName(String name){
-        Products existing = productRepository.findByProductNameIgnoreCase(name);
-
-        if (existing != null) {
-            throw new IllegalArgumentException("Product already exists with name " + name);
-        }
-    }
-
-    private void validateUniqueProductCode(String code){
-        Products existing = productRepository.findByProductCodeIgnoreCase(code);
-
-        if (existing != null) {
-            throw new IllegalArgumentException("Product already exists with code: " + code);
-        }
+        return productRepository.findByCategory(id)
+                .stream()
+                .map(ProductResponse::new)
+                .collect(Collectors.toList());
     }
 
     private ProductCategories validateCategoryExists(Long categoryId){
