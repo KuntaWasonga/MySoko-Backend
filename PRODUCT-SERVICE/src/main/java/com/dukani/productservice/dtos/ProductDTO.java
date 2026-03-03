@@ -24,6 +24,6 @@ public class ProductDTO {
 
     private String currency;
 
-    @NotBlank(message = "Created by is required")
+    @NotBlank(message = "Created by field is required")
     private String createdBy;
 }

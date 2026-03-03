@@ -14,5 +14,5 @@ public class TimeConfig {
     public Clock clock() {
         return Clock.system(ZoneId.of("Africa/Nairobi"));
     }
-    
+
 }

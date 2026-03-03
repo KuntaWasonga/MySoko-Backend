@@ -12,12 +12,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.context.request.ServletWebRequest;
-import org.springframework.web.context.request.WebRequest;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 
 @Log4j2
@@ -26,6 +26,7 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     private final OracleConstraintResolver constraintResolver;
+    private final Clock clock;
 
 
     // ERROR 400
@@ -47,14 +48,15 @@ public class GlobalExceptionHandler {
                         .message("Validation failed")
                         .data(errors)
                         .status(status.value())
-                        .timestamp(LocalDateTime.now())
+                        .timestamp(LocalDateTime.now(clock))
                         .path(request.getRequestURI())
                         .build(), status);
     }
 
     // ERROR 404
     @ExceptionHandler(ItemNotFoundException.class)
-    public ResponseEntity<StandardResponse<?>> handleItemNotFoundException(ItemNotFoundException ex, WebRequest request) {
+    public ResponseEntity<StandardResponse<?>> handleItemNotFoundException(
+            ItemNotFoundException ex, HttpServletRequest request) {
         log.error("ItemNotFoundException: ", ex);
 
         var status = HttpStatus.NOT_FOUND;
@@ -62,14 +64,15 @@ public class GlobalExceptionHandler {
                 StandardResponse.builder()
                         .message(ex.getMessage())
                         .status(status.value())
-                        .timestamp(LocalDateTime.now())
-                        .path(request instanceof ServletWebRequest ? ((ServletWebRequest) request).getRequest().getRequestURI() : null)
+                        .timestamp(LocalDateTime.now(clock))
+                        .path(request.getRequestURI())
                         .build(), status);
     }
 
     // ERROR 409
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<StandardResponse<?>> handleDataIntegrityViolationException(DataIntegrityViolationException ex, WebRequest request) {
+    public ResponseEntity<StandardResponse<?>> handleDataIntegrityViolationException(
+            DataIntegrityViolationException ex, HttpServletRequest request) {
         log.error("DataIntegrityViolationException: ", ex);
 
         var status = HttpStatus.CONFLICT;
@@ -79,16 +82,18 @@ public class GlobalExceptionHandler {
                 StandardResponse.builder()
                         .message(message)
                         .status(status.value())
-                        .timestamp(LocalDateTime.now())
-                        .path(request instanceof ServletWebRequest ? ((ServletWebRequest) request).getRequest().getRequestURI() : null)
+                        .timestamp(LocalDateTime.now(clock))
+                        .path(request.getRequestURI())
                         .build(), status);
     }
 
 
     // ERROR 500
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<StandardResponse<?>> handleGlobalException(Exception ex, WebRequest request) {
-        log.error("Exception: ", ex);
+    public ResponseEntity<StandardResponse<?>> handleGlobalException(Exception ex, HttpServletRequest request) {
+        String errorId = UUID.randomUUID().toString();
+        log.error("Unhandled exception [Error ID: {}] for request: {} {}",
+                errorId, request.getMethod(), request.getRequestURI(), ex);
 
         var status = HttpStatus.INTERNAL_SERVER_ERROR;
 
@@ -96,8 +101,8 @@ public class GlobalExceptionHandler {
                 StandardResponse.builder()
                         .message("An unexpected error occurred")
                         .status(status.value())
-                        .timestamp(LocalDateTime.now())
-                        .path(request instanceof ServletWebRequest ? ((ServletWebRequest) request).getRequest().getRequestURI() : null)
+                        .timestamp(LocalDateTime.now(clock))
+                        .path(request.getRequestURI())
                         .build(), status);
     }
 }

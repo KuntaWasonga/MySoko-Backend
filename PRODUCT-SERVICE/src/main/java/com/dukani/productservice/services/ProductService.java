@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface ProductService {
     ProductResponse createProduct(ProductDTO request);
-    ProductResponse getProduct(Long productId);
 
+    ProductResponse getProduct(Long productId);
     List<ProductResponse> getProductsByCategory(Long id);
 }
